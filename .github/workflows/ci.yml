@@ -32,9 +32,9 @@ jobs:
           node-version: 14
 
       - name: Setup Linux Dependencies
-        if: startsWith(matrix.os, "ubuntu")
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt-get upgrade
+          sudo apt-get update
           sudo apt-get install -y software-properties-common libx11-dev libxtst-dev libxt-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev xorg-dev libxcb-xkb-dev libxkbfile-dev libxinerama-dev
 
       - name: Patch and Install Packages
@@ -50,7 +50,8 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
 
-      - uses: actions/upload-artifact@v3
+      - name: Store Artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: builds
           path: iohook/prebuilds/
@@ -63,19 +64,21 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v3
+      - name: Pull Artifacts
+        uses: actions/download-artifact@v3
         with:
           name: builds
           path: builds
 
-      - uses: ncipollo/release-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: "ci"
-        name: "CI"
-        body: "CI Build"
-        commit: "main"
-        allowUpdates: true
-        artifacts: "builds/*"
-        draft: false
-        prerelease: true
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: "ci"
+          name: "CI"
+          body: "CI Build"
+          commit: "main"
+          allowUpdates: true
+          artifacts: "builds/*"
+          draft: false
+          prerelease: true
