@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-11, windows-2019]
+        arch: [x86_64]
+        include:
+          - os: windows-2019
+            arch: i686
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.os }} (${{matrix.arch}})
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          registry-url: "https://registry.npmjs.org"
+          node-version: 14
+
+      - name: Setup Linux Dependencies
+        if: startsWith(matrix.os, "ubuntu")
+        run: |
+          sudo apt-get upgrade
+          sudo apt-get install -y software-properties-common libx11-dev libxtst-dev libxt-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev xorg-dev libxcb-xkb-dev libxkbfile-dev libxinerama-dev
+
+      - name: Patch and Install Packages
+        run: |
+          cd iohook
+          git apply ../iohook.patch
+          npm ci --ignore-scripts
+
+      - name: Build
+        run: |
+          cd iohook
+          npm run build --all ----upload=false --msvs_version=2019
+        env:
+          ARCH: ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: builds
+          path: iohook/prebuilds/
+
+  release:
+    runs-on: ubuntu-20.04
+    name: Release
+    needs:
+      - ci
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+          path: builds
+
+      - uses: ncipollo/release-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: "ci"
+        name: "CI"
+        body: "CI Build"
+        commit: "main"
+        allowUpdates: true
+        artifacts: "builds/*"
+        draft: false
+        prerelease: true
