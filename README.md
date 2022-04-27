@@ -83,6 +83,7 @@ node node_modules/iohook/install.js
 - 15.X.X (ABI 98)
 - 16.X.X (ABI 99)
 - 17.X.X (ABI 101)
+- 18.X.X (ABI 103)
 
 ## Node.js
 
@@ -96,3 +97,4 @@ node node_modules/iohook/install.js
 - 15.X.X (ABI 88)
 - 16.X.X (ABI 93)
 - 17.X.X (ABI 102)
+- 18.X.X (ABI 108)
